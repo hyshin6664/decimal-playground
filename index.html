@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>소수점 놀이터 — 윤오랑 10배·100배 배우기</title>
+<style>
+  :root{
+    --berry:#FF4E86; --tangerine:#FF9F1C; --grape:#8A63D2;
+    --mint:#17C3A2; --sky:#38B6FF; --sun:#FFD166;
+    --cream:#FFF6EC; --card:#FFFFFF; --ink:#3B2E3A; --soft:#8B7C88;
+    --line:#F0E4DA; --shadow:rgba(74,46,64,.14); --cell:#FFF1DC;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){--cream:#241A2B; --card:#2E2338; --ink:#FBEFF6; --soft:#B9A8C4;
+      --line:#3D3049; --shadow:rgba(0,0,0,.4); --cell:#3A2C45;}
+  }
+  :root[data-theme="dark"]{--cream:#241A2B; --card:#2E2338; --ink:#FBEFF6; --soft:#B9A8C4; --line:#3D3049; --shadow:rgba(0,0,0,.4); --cell:#3A2C45;}
+  :root[data-theme="light"]{--cream:#FFF6EC; --card:#FFFFFF; --ink:#3B2E3A; --soft:#8B7C88; --line:#F0E4DA; --shadow:rgba(74,46,64,.14); --cell:#FFF1DC;}
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+    background:
+      radial-gradient(1400px 600px at 15% -10%, rgba(56,182,255,.18), transparent 60%),
+      radial-gradient(1200px 600px at 110% 0%, rgba(255,78,134,.16), transparent 55%),
+      var(--cream);
+    color:var(--ink); min-height:100vh; line-height:1.5; overflow-x:hidden;
+  }
+  /* 태블릿 가로 화면을 꽉 채우는 넓은 레이아웃 */
+  .wrap{max-width:1240px; margin:0 auto; padding:14px 22px 110px;}
+
+  .topbar{position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:12px;
+    padding:10px 4px; margin-bottom:8px; backdrop-filter:blur(8px);
+    background:linear-gradient(var(--cream), rgba(0,0,0,0));}
+  .brand{font-weight:800; font-size:22px; letter-spacing:-.02em; white-space:nowrap;}
+  .brand b{color:var(--sky);}
+  .dots{display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; justify-content:flex-end;}
+  .dot{width:13px; height:13px; border-radius:50%; background:var(--line); transition:.3s;}
+  .dot.on{background:var(--berry); transform:scale(1.3);}
+  .dot.done{background:var(--mint);}
+  .sound-btn{border:none; background:var(--card); color:var(--ink); width:48px; height:48px;
+    border-radius:16px; font-size:22px; cursor:pointer; box-shadow:0 4px 12px var(--shadow);
+    display:grid; place-items:center; flex:0 0 auto;}
+
+  .stage{background:var(--card); border-radius:32px; padding:30px 34px 32px;
+    box-shadow:0 18px 40px var(--shadow); display:none;
+    animation:pop .45s cubic-bezier(.2,1.1,.3,1);}
+  .stage.show{display:block;}
+  @keyframes pop{from{opacity:0; transform:translateY(24px) scale(.97);} to{opacity:1; transform:none;}}
+
+  .eyebrow{display:inline-flex; align-items:center; gap:7px; font-size:15px; font-weight:800;
+    letter-spacing:.02em; color:#fff; background:var(--grape); padding:7px 16px;
+    border-radius:999px; margin-bottom:12px;}
+  .eyebrow.hard{background:var(--berry);}
+  h1{font-size:clamp(28px,4.2vw,48px); margin:2px 0 6px; letter-spacing:-.03em;
+    text-wrap:balance; line-height:1.18; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  h1 em{font-style:normal; color:var(--berry);}
+  .lead{font-size:clamp(17px,2vw,22px); color:var(--soft); margin:0 0 16px; text-wrap:balance;
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .lead b{color:var(--ink);}
+
+  .play{display:inline-flex; align-items:center; gap:10px; border:none; cursor:pointer;
+    font-family:inherit; background:linear-gradient(135deg,var(--sky),var(--grape)); color:#fff;
+    font-weight:800; font-size:19px; padding:14px 24px; border-radius:18px;
+    box-shadow:0 8px 20px rgba(56,182,255,.35); margin-bottom:18px; transition:transform .15s;}
+  .play:active{transform:scale(.95);}
+  .play.speaking{animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{50%{box-shadow:0 8px 30px rgba(138,99,210,.6);}}
+
+  .demo{background:linear-gradient(180deg, rgba(56,182,255,.08), rgba(255,78,134,.06));
+    border:2px dashed var(--line); border-radius:26px; padding:26px 20px; text-align:center; margin-bottom:18px;}
+
+  /* 분수 — 문제집처럼 위에 분자 / 가로줄 / 아래 분모 */
+  .frac{display:inline-flex; flex-direction:column; align-items:center; line-height:1;
+    font-weight:900; vertical-align:middle; margin:0 4px;}
+  .frac .num,.frac .den{padding:0 7px;}
+  .frac .bar{width:100%; height:4px; background:currentColor; border-radius:3px; margin:5px 0;}
+  .fbig{font-size:44px;} .fmid{font-size:30px;} .fsm{font-size:22px;}
+  .eq{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+    font-size:30px; font-weight:900; margin:8px 0;}
+  .eq .op{color:var(--soft);}
+
+  /* 자리표 (천·백·십·일·점·1/10·1/100·1/1000) */
+  .place{display:grid; grid-template-columns:repeat(4,1fr) 26px repeat(3,1fr); gap:6px;
+    max-width:900px; margin:0 auto; align-items:stretch;}
+  .place .h{font-size:15px; font-weight:800; color:var(--soft); line-height:1.15; min-height:44px;
+    display:grid; place-items:end center; padding-bottom:3px;}
+  .place .h .frac{font-size:14px; margin:0;} .place .h .frac .bar{height:2px; margin:2px 0;}
+  .place .h .frac .num,.place .h .frac .den{padding:0 3px;}
+  .place .c{background:var(--cell); border:3px solid var(--line); border-radius:16px;
+    font-size:clamp(30px,4.5vw,50px); font-weight:900; height:clamp(64px,8vw,92px); display:grid; place-items:center;
+    transition:transform .35s, background .3s, border-color .3s;}
+  .place .c.empty{color:var(--line);}
+  .place .c.lit{background:rgba(255,78,134,.16); border-color:var(--berry); color:var(--berry);}
+  .place .c.zero{background:rgba(23,195,162,.16); border-color:var(--mint); color:var(--mint);}
+  .place .pt{display:grid; place-items:end center; font-size:46px; font-weight:900; padding-bottom:8px; color:var(--tangerine);}
+  .place .pt.h{font-size:14px; align-items:end;}
+  .place .pt.ghost{color:var(--line);}
+
+  /* 큰 숫자 + 개구리 점 */
+  .numshow{font-size:clamp(56px,9vw,104px); font-weight:900; letter-spacing:.06em; margin:10px 0 2px;
+    display:inline-flex; align-items:baseline; justify-content:center; position:relative; line-height:1.1;}
+  .numshow .d{display:inline-block; min-width:.68em; text-align:center;}
+  .numshow .p{color:var(--tangerine); display:inline-block; width:.4em; text-align:center;
+    transition:transform .5s cubic-bezier(.2,1.2,.3,1);}
+  .numshow .p.ghost{color:var(--line);}
+  .numshow .d.zero{color:var(--mint);}
+  .arrowhint{font-size:clamp(17px,2vw,22px); font-weight:800; color:var(--soft); margin-top:6px;}
+  .arrowhint b{color:var(--berry);}
+
+  .controls{display:flex; flex-direction:column; gap:16px; max-width:900px; margin:0 auto;}
+  .ctl label{font-weight:800; font-size:19px; display:flex; justify-content:space-between; margin-bottom:8px;}
+  .ctl label span{color:var(--berry);}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:16px;
+    border-radius:99px; background:var(--line); outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:38px; height:38px;
+    border-radius:50%; background:var(--berry); border:4px solid #fff;
+    box-shadow:0 3px 8px var(--shadow); cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:32px; height:32px; border-radius:50%;
+    background:var(--berry); border:4px solid #fff; box-shadow:0 3px 8px var(--shadow); cursor:pointer;}
+
+  .btnrow{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;}
+  .pill{border:3px solid var(--line); background:var(--card); color:var(--ink); font-family:inherit;
+    font-weight:900; font-size:22px; padding:12px 20px; border-radius:999px; cursor:pointer; min-height:56px;
+    display:inline-flex; align-items:center; gap:4px; transition:transform .12s,border-color .2s;}
+  .pill:active{transform:scale(.95);}
+  .pill.on{border-color:var(--berry); background:rgba(255,78,134,.12);}
+  .pill .frac{font-size:17px; margin:0;} .pill .frac .bar{height:3px; margin:2px 0;} .pill .frac .num,.pill .frac .den{padding:0 4px;}
+
+  .readout{text-align:center; font-size:clamp(20px,2.4vw,28px); font-weight:800; margin-top:14px;
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;}
+  .readout .hi{color:var(--berry);}
+  .readout .frac{font-size:.8em;} .readout .frac .bar{height:3px; margin:3px 0;}
+
+  .tip{background:rgba(23,195,162,.12); border-left:7px solid var(--mint);
+    border-radius:0 16px 16px 0; padding:15px 20px; font-size:clamp(16px,1.8vw,20px); font-weight:700;
+    margin-top:14px; color:var(--ink); text-align:left; line-height:1.7;}
+  .tip b{color:var(--mint);}
+  .tip.warn{background:rgba(255,159,28,.14); border-color:var(--tangerine);}
+  .tip.warn b{color:#E58200;}
+  .tip .frac{font-size:.85em; margin:0 3px;} .tip .frac .bar{height:3px; margin:2px 0;} .tip .frac .num,.tip .frac .den{padding:0 4px;}
+
+  .action{border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:21px;
+    color:#fff; background:var(--tangerine); padding:16px 26px; border-radius:18px;
+    box-shadow:0 8px 20px rgba(255,159,28,.4); transition:transform .15s; width:100%; max-width:640px; margin:14px auto 0;
+    display:flex; align-items:center; justify-content:center; gap:6px;}
+  .action:active{transform:scale(.96);}
+  .action:disabled{opacity:.55;}
+  .action .frac{font-size:16px; margin:0 4px;} .action .frac .bar{height:3px; margin:2px 0;} .action .frac .num,.action .frac .den{padding:0 4px;}
+
+  .steps{display:flex; flex-direction:column; gap:10px; margin:6px 0 14px; text-align:left;}
+  .step{background:var(--card); border:2px solid var(--line); border-radius:18px;
+    padding:14px 18px; font-size:clamp(17px,1.9vw,21px); font-weight:700; opacity:.35;
+    transform:translateY(6px); transition:.35s; line-height:1.6;}
+  .step.on{opacity:1; transform:none; border-color:var(--grape); box-shadow:0 6px 16px var(--shadow);}
+  .step .k{display:inline-block; min-width:30px; height:30px; line-height:30px; text-align:center;
+    background:var(--grape); color:#fff; border-radius:9px; font-weight:900; margin-right:8px; font-size:16px;}
+  .step.answer.on{border-color:var(--mint); background:rgba(23,195,162,.12);}
+  .step.answer .k{background:var(--mint);}
+  .step .frac{font-size:.85em;} .step .frac .bar{height:3px; margin:2px 0;} .step .frac .num,.step .frac .den{padding:0 4px;}
+
+  /* 요약 카드 */
+  .rules{display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left;}
+  .rule{border:3px solid var(--line); border-radius:20px; padding:16px 18px; background:var(--card);}
+  .rule .t{font-weight:900; font-size:clamp(20px,2.2vw,26px); display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .rule .t .frac{font-size:.8em; margin:0;} .rule .t .frac .bar{height:3px; margin:2px 0;} .rule .t .frac .num,.rule .t .frac .den{padding:0 4px;}
+  .rule .d{font-size:clamp(15px,1.7vw,19px); font-weight:700; color:var(--soft);}
+  .rule .d b{color:var(--berry);}
+  .rule.left{border-color:var(--sky);} .rule.left .t{color:var(--sky);}
+  .rule.right{border-color:var(--berry);} .rule.right .t{color:var(--berry);}
+  .rule .ex{font-size:clamp(18px,2vw,24px); font-weight:900; margin-top:8px; color:var(--ink);}
+
+  .nav{display:flex; gap:14px; margin-top:24px;}
+  .nav button{flex:1; border:none; cursor:pointer; font-family:inherit; font-weight:800;
+    font-size:21px; padding:18px; border-radius:20px; transition:transform .15s; min-height:60px;}
+  .nav button:active{transform:scale(.96);}
+  .next{background:var(--berry); color:#fff; box-shadow:0 8px 20px rgba(255,78,134,.4);}
+  .prev{background:var(--card); color:var(--soft); box-shadow:0 4px 12px var(--shadow); flex:0 0 100px;}
+  .next:disabled{opacity:.4; filter:grayscale(.5);}
+
+  .quiz-q{font-size:clamp(26px,3.4vw,40px); font-weight:900; text-align:center; margin:6px 0 18px; text-wrap:balance;
+    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .quiz-q .frac{font-size:.85em;} .quiz-q .frac .bar{height:4px; margin:4px 0;}
+  .choices{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  .choice{border:3px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:20px; padding:18px 8px; cursor:pointer; font-family:inherit; font-weight:900; font-size:clamp(26px,3vw,36px);
+    display:grid; place-items:center; gap:6px; transition:transform .12s,border-color .2s; min-height:84px;}
+  .choice:active{transform:scale(.96);}
+  .choice.correct{border-color:var(--mint); background:rgba(23,195,162,.15);}
+  .choice.wrong{border-color:var(--berry); background:rgba(255,78,134,.12); animation:shake .4s;}
+  @keyframes shake{25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+  .qfeed{text-align:center; font-weight:800; font-size:21px; min-height:30px; margin-top:16px;}
+  .qprog{text-align:center; color:var(--soft); font-weight:700; font-size:18px; margin-bottom:10px;}
+
+  .start{text-align:center; padding:36px 20px;}
+  .start h1{font-size:clamp(32px,5.5vw,58px); justify-content:center;}
+  .start .lead{justify-content:center;}
+  .mascot{font-size:90px; margin:6px 0; animation:bob 2.4s ease-in-out infinite;}
+  @keyframes bob{50%{transform:translateY(-12px) rotate(-4deg);}}
+  .start .play{margin-top:8px; font-size:24px; padding:18px 36px;}
+
+  .done{text-align:center; padding:28px 16px;}
+  .done h1{justify-content:center;} .done .lead{justify-content:center;}
+  .done .mascot{font-size:80px;}
+  .badge{font-size:26px; font-weight:900; color:var(--mint); margin:8px 0;}
+
+  canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:50;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important;}}
+  @media (max-width:640px){
+    .wrap{padding:12px 14px 100px;} .stage{padding:22px 18px 24px; border-radius:24px;}
+    .rules{grid-template-columns:1fr;} .choices{grid-template-columns:1fr 1fr;}
+    .place{gap:4px; grid-template-columns:repeat(4,1fr) 16px repeat(3,1fr);} .place .pt{font-size:30px;}
+    .brand{font-size:17px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">🐸 <b>소수점</b> 놀이터</div>
+    <div class="dots" id="dots"></div>
+    <button class="sound-btn" id="soundToggle" title="소리 켜기/끄기">🔊</button>
+  </div>
+
+  <!-- 0 시작 -->
+  <section class="stage show" data-stage="0">
+    <div class="start">
+      <div class="mascot">🐸</div>
+      <div class="eyebrow">🎈 4학년 수학 · 소수점 점프</div>
+      <h1>윤오야, <em>소수점 놀이터</em>에 온 걸 환영해!</h1>
+      <p class="lead">숫자에 <b>10배·100배</b>를 하거나 <span class="frac fsm" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span>·<span class="frac fsm" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span>을 곱하면<br>숫자는 그대로인데 <b>점만 폴짝 뛰어</b>! 개구리 점이 어디로 뛰는지 같이 보자 😎</p>
+      <button class="play" data-say="greet"><span class="ico">▶</span> 시작할래! (소리 켜기)</button>
+      <p style="font-size:15px;color:var(--soft);margin-top:8px">버튼을 누르면 목소리 설명이 나와요 🔊</p>
+    </div>
+  </section>
+
+  <!-- 1 자리의 비밀 -->
+  <section class="stage" data-stage="1">
+    <div class="eyebrow">STAGE 1 / 9 · 자리의 비밀</div>
+    <h1>숫자는 <em>자리</em>가 전부야!</h1>
+    <p class="lead">같은 「3」이라도 <b>어느 칸</b>에 있느냐에 따라 크기가 달라져.</p>
+    <button class="play" data-say="s1"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place1"></div>
+      <div class="readout" style="margin-top:16px">왼쪽 칸으로 한 칸 가면 <span class="hi">10배 커지고</span>, 오른쪽 칸으로 한 칸 가면 <span class="hi">10분의 1로 작아져!</span></div>
+      <div class="eq" style="margin-top:14px">
+        <span style="color:var(--grape)">3</span><span class="op">은</span>
+        <span style="color:var(--berry)">일의 자리</span><span class="op">&nbsp;·&nbsp;</span>
+        <span style="color:var(--grape)">0.3</span><span class="op">은</span>
+        <span class="frac fmid" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span><span class="op">의 자리</span>
+      </div>
+    </div>
+    <div class="tip">🔑 소수점 <b>오른쪽 첫째 칸</b>은 <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> 자리, <b>둘째 칸</b>은 <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> 자리야. 칸이 오른쪽으로 갈수록 10배씩 작아져!</div>
+  </section>
+
+  <!-- 2 10배 -->
+  <section class="stage" data-stage="2">
+    <div class="eyebrow">STAGE 2 / 9 · 10배</div>
+    <h1><em>10배</em> 하면 점이 오른쪽으로 폴짝!</h1>
+    <p class="lead"><b>2.35 × 10</b> 은 얼마일까? 숫자는 그대로, <b>점만 한 칸</b> 움직여.</p>
+    <button class="play" data-say="s2"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place2"></div>
+      <div class="numshow" id="num2"></div>
+      <div class="arrowhint" id="hint2">버튼을 눌러봐 👇</div>
+      <button class="action" id="btn2">🐸 ×10 점프!</button>
+    </div>
+    <div class="tip">🔑 10배 = 모든 숫자가 <b>왼쪽 칸으로 한 칸</b> 이사 → 보기에는 <b>점이 오른쪽으로 한 칸</b> 뛴 것처럼 보여! <b>2.35 × 10 = 23.5</b></div>
+  </section>
+
+  <!-- 3 100배 -->
+  <section class="stage" data-stage="3">
+    <div class="eyebrow">STAGE 3 / 9 · 100배</div>
+    <h1><em>100배</em>는 두 번 폴짝!</h1>
+    <p class="lead">100 = 10 × 10 이니까, <b>10배를 두 번</b> 하는 거야. 점이 <b>두 칸</b> 뛰어!</p>
+    <button class="play" data-say="s3"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place3"></div>
+      <div class="numshow" id="num3"></div>
+      <div class="arrowhint" id="hint3">버튼을 눌러봐 👇</div>
+      <button class="action" id="btn3">🐸🐸 ×100 두 번 점프!</button>
+    </div>
+    <div class="tip warn">🔑 <b>2.35 × 100 = 235</b> — 점이 맨 끝까지 가면 점은 안 써도 돼! 칸이 모자라면 <b>0을 채워</b>: <b>0.7 × 100 = 70</b></div>
+  </section>
+
+  <!-- 4 자연수의 숨은 점 -->
+  <section class="stage" data-stage="4">
+    <div class="eyebrow hard">STAGE 4 / 9 · 자연수는?</div>
+    <h1>자연수에도 <em>점이 숨어</em> 있어!</h1>
+    <p class="lead"><b>23</b>은 사실 <b>23.</b> 이야 — 점이 맨 끝에 <b>숨어</b> 있을 뿐! 그래서 <b>23 × 10</b>도 똑같이 점프해.</p>
+    <button class="play" data-say="s4"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place4"></div>
+      <div class="numshow" id="num4"></div>
+      <div class="arrowhint" id="hint4">연한 점이 보이지? 숨어 있는 점이야 👇</div>
+      <button class="action" id="btn4">🐸 23 × 10 점프!</button>
+    </div>
+    <div class="tip warn">🔑 숨은 점이 오른쪽으로 뛰면 뒤에 <b>빈칸</b>이 생기지? 거기에 <b>0을 채워</b>! <b>23 × 10 = 230</b>, <b>23 × 100 = 2300</b>. 그래서 자연수 × 10은 「<b>0 하나 붙이기</b>」, × 100은 「<b>0 두 개 붙이기</b>」랑 똑같아!</div>
+  </section>
+
+  <!-- 5 1/10 -->
+  <section class="stage" data-stage="5">
+    <div class="eyebrow hard">STAGE 5 / 9 · 10분의 1</div>
+    <h1><span class="frac fmid" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> 은 <em>반대로</em> 왼쪽 점프!</h1>
+    <p class="lead"><b>23.5 ×</b> <span class="frac fsm" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> = <b>23.5 ÷ 10</b> 이야. 10으로 나누면 작아지니까 점이 <b>왼쪽</b>으로!</p>
+    <button class="play" data-say="s5"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place5"></div>
+      <div class="numshow" id="num5"></div>
+      <div class="arrowhint" id="hint5">버튼을 눌러봐 👇</div>
+      <button class="action" id="btn5">🐸 ×<span class="frac" style="color:#fff"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> 왼쪽 점프!</button>
+    </div>
+    <div class="tip">🔑 <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span>을 곱하는 것 = <b>10으로 나누는 것</b> = 10개로 똑같이 나눈 것 중 1개! 그래서 숫자가 <b>작아져</b>. <b>23.5 ×</b> <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> <b>= 2.35</b> &nbsp;·&nbsp; 자연수도 똑같아: <b>230 ×</b> <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> <b>= 23</b></div>
+  </section>
+
+  <!-- 6 1/100 -->
+  <section class="stage" data-stage="6">
+    <div class="eyebrow hard">STAGE 6 / 9 · 100분의 1</div>
+    <h1><span class="frac fmid" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> 은 왼쪽으로 <em>두 번</em>!</h1>
+    <p class="lead"><b>235 ×</b> <span class="frac fsm" style="color:var(--berry)"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> = <b>235 ÷ 100</b>. 점이 왼쪽으로 <b>두 칸</b>! 칸이 모자라면 <b>0을 채워</b>.</p>
+    <button class="play" data-say="s6"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="place" id="place6"></div>
+      <div class="numshow" id="num6"></div>
+      <div class="arrowhint" id="hint6">버튼을 눌러봐 👇</div>
+      <button class="action" id="btn6">🐸🐸 ×<span class="frac" style="color:#fff"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> 두 번 점프!</button>
+    </div>
+    <div class="tip warn">🔑 <b>235 ×</b> <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> <b>= 2.35</b>. 그런데 <b>7 ×</b> <span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> 은? 7 앞에 칸이 없지? 그럼 <b>0을 채워서</b> 0.07! (왼쪽 두 칸 = <b>0.0</b>7)</div>
+  </section>
+
+  <!-- 7 직접 해보기 -->
+  <section class="stage" data-stage="7">
+    <div class="eyebrow">STAGE 7 / 9 · 직접 해보기</div>
+    <h1>네가 직접 <em>점프</em>시켜봐!</h1>
+    <p class="lead">숫자를 고르고 버튼을 눌러봐. 점이 어디로 몇 칸 뛰는지 보면서 놀아 🎮</p>
+    <button class="play" data-say="s7"><span class="ico">▶</span> 어떻게 하는지 듣기</button>
+    <div class="demo">
+      <div class="controls" style="margin-bottom:14px">
+        <div class="ctl"><label>시작 숫자 고르기 <span id="baseLbl">4.56</span></label><input type="range" id="baseSlider" min="0" max="9" value="2"></div>
+      </div>
+      <div class="btnrow">
+        <button class="pill" data-k="100">×100</button>
+        <button class="pill" data-k="10">×10</button>
+        <button class="pill on" data-k="1">그대로</button>
+        <button class="pill" data-k="0.1">×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span></button>
+        <button class="pill" data-k="0.01">×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span></button>
+      </div>
+      <div class="place" id="place7" style="margin-top:16px"></div>
+      <div class="numshow" id="num7"></div>
+      <div class="arrowhint" id="hint7"></div>
+      <div class="readout" id="read7"></div>
+    </div>
+  </section>
+
+  <!-- 8 한눈에 정리 -->
+  <section class="stage" data-stage="8">
+    <div class="eyebrow">STAGE 8 / 9 · 한눈에 정리</div>
+    <h1>개구리 점프 <em>4가지</em> 규칙</h1>
+    <p class="lead"><b>커지면 오른쪽, 작아지면 왼쪽.</b> 0이 하나면 한 칸, 0이 둘이면 두 칸!</p>
+    <button class="play" data-say="s8"><span class="ico">▶</span> 설명 들어보기</button>
+    <div class="demo">
+      <div class="rules">
+        <div class="rule right"><div class="t">×10 → 오른쪽 1칸 ➡️</div><div class="d">0이 <b>1개</b>니까 <b>1칸</b>. 숫자가 <b>커져</b></div><div class="ex">3.14 → 31.4 &nbsp;/&nbsp; 23 → 230</div></div>
+        <div class="rule right"><div class="t">×100 → 오른쪽 2칸 ➡️➡️</div><div class="d">0이 <b>2개</b>니까 <b>2칸</b>. 모자라면 0 채움</div><div class="ex">3.14 → 314 &nbsp;/&nbsp; 0.5 → 50</div></div>
+        <div class="rule left"><div class="t">×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span> → 왼쪽 1칸 ⬅️</div><div class="d">= ÷10. 0이 <b>1개</b>니까 <b>1칸</b>. 숫자가 <b>작아져</b></div><div class="ex">31.4 → 3.14 &nbsp;/&nbsp; 230 → 23</div></div>
+        <div class="rule left"><div class="t">×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span> → 왼쪽 2칸 ⬅️⬅️</div><div class="d">= ÷100. 0이 <b>2개</b>니까 <b>2칸</b>. 모자라면 0 채움</div><div class="ex">314 → 3.14 &nbsp;/&nbsp; 5 → 0.05</div></div>
+      </div>
+      <div class="steps" id="steps8" style="margin-top:16px">
+        <div class="step"><span class="k">1</span>먼저 물어봐: <b style="color:var(--berry)">커지는 거야, 작아지는 거야?</b> → ×10·×100이면 커지고(오른쪽), ×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span>·×<span class="frac"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span>이면 작아져(왼쪽)</div>
+        <div class="step"><span class="k">2</span>그다음 세어봐: <b style="color:var(--grape)">0이 몇 개야?</b> → 10은 1개, 100은 2개 = 뛰는 칸 수</div>
+        <div class="step"><span class="k">3</span>점을 그만큼 옮기고, <b style="color:var(--tangerine)">빈칸이 생기면 0으로 채워</b> (자연수는 점이 맨 끝에 숨어 있어!)</div>
+        <div class="step answer"><span class="k">4</span>끝! 숫자 순서는 <b style="color:var(--mint)">절대 안 바뀌어</b>. 점만 움직인 거야 🎉</div>
+      </div>
+      <button class="action" id="btn8">👉 푸는 순서 한 단계씩</button>
+    </div>
+    <div class="tip">🔑 헷갈리면 이것만 기억해: <b>곱하는 수에 0이 몇 개?</b> 그만큼 뛰고, <b>분수(÷)면 왼쪽, 그냥 수면 오른쪽</b>!</div>
+  </section>
+
+  <!-- 9 퀴즈 -->
+  <section class="stage" data-stage="9">
+    <div class="eyebrow">STAGE 9 / 9 · 도전!</div>
+    <h1>직접 <em>풀어보기</em> ✏️</h1>
+    <p class="lead">이제 윤오 차례! 8문제 도전이야 💪</p>
+    <button class="play" data-say="s9"><span class="ico">▶</span> 문제 읽어주기</button>
+    <div class="demo" style="text-align:left">
+      <div class="qprog" id="qprog">문제 1 / 8</div>
+      <div class="quiz-q" id="quizQ"></div>
+      <div class="choices" id="choices"></div>
+      <div class="qfeed" id="qfeed"></div>
+    </div>
+  </section>
+
+  <!-- 10 완료 -->
+  <section class="stage" data-stage="10">
+    <div class="done">
+      <div class="mascot">🏆</div>
+      <div class="badge" id="scoreLine">참 잘했어요!</div>
+      <h1>윤오, <em>소수점 마스터!</em></h1>
+      <p class="lead">10배·100배는 오른쪽, <span class="frac fsm"><span class="num">1</span><span class="bar"></span><span class="den">10</span></span>·<span class="frac fsm"><span class="num">1</span><span class="bar"></span><span class="den">100</span></span>은 왼쪽! 자연수는 점이 숨어 있을 뿐!<br>이제 소수점이 어디로 뛰든 다 잡을 수 있어 😎</p>
+      <button class="action" id="btnAgain" style="max-width:300px">🔄 처음부터 다시</button>
+    </div>
+  </section>
+
+  <div class="nav" id="nav" style="display:none">
+    <button class="prev" id="prevBtn">◀</button>
+    <button class="next" id="nextBtn">다음 ▶</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LAST=10, CONTENT_MAX=9, cur=0, soundOn=true;
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  /* ===== 음성 ===== */
+  var voice=null;
+  function pickVoice(){
+    var vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+    var ko=vs.filter(function(v){return /ko/i.test(v.lang);});
+    var pref=["Google","Yuna","Heami","SunHi","Nara","Ji-Woo","Seoyeon"];
+    for(var i=0;i<pref.length;i++){var f=ko.find(function(v){return v.name.indexOf(pref[i])>=0;}); if(f){voice=f;return;}}
+    if(ko[0]) voice=ko[0];
+  }
+  if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+
+  var SCRIPT={
+    greet:"안녕 윤오야! 나는 소수점 개구리야! 오늘은 숫자에 십 배, 백 배를 하거나, 십분의 일, 백분의 일을 곱하면 어떻게 되는지 배워볼 거야. 비밀 하나 먼저 알려줄게. 숫자는 하나도 안 바뀌어! 점만 폴짝폴짝 뛰는 거야. 어디로, 몇 칸 뛰는지만 알면 끝이야. 자, 천천히 같이 가 보자!",
+    s1:"먼저 자리의 비밀부터! 숫자는 어느 칸에 있느냐가 전부야. 왼쪽부터 천의 자리, 백의 자리, 십의 자리, 일의 자리! 그리고 점이 있고, 점 오른쪽은 십분의 일 자리, 백분의 일 자리, 천분의 일 자리야. 여기서 제일 중요한 거! 왼쪽 칸으로 한 칸 가면 십 배 커지고, 오른쪽 칸으로 한 칸 가면 십분의 일로 작아져. 일의 자리에 있는 삼은 그냥 삼. 그런데 십분의 일 자리에 있는 삼은 영 점 삼이야. 같은 삼인데 칸이 달라서 크기가 다른 거지! 이것만 알면 오늘 배울 건 다 쉬워.",
+    s2:"이제 십 배를 해보자! 이 점 삼오에 십을 곱하면 얼마일까? 십 배라는 건, 모든 숫자가 한 칸씩 더 큰 자리로 이사 가는 거야. 일의 자리에 있던 이는 십의 자리로, 십분의 일 자리에 있던 삼은 일의 자리로! 그런데 숫자가 전부 왼쪽으로 이사 가면, 점은 가만히 있어도 마치 오른쪽으로 한 칸 뛴 것처럼 보여. 그래서 이 점 삼오 곱하기 십은, 이십삼 점 오! 숫자 이, 삼, 오 순서는 똑같지? 점만 오른쪽으로 한 칸! 버튼을 눌러서 개구리 점이 뛰는 걸 봐 봐!",
+    s3:"백 배는 어떨까? 백은 십 곱하기 십이야! 그러니까 십 배를 두 번 하는 거랑 똑같아. 점이 오른쪽으로 한 칸, 그리고 또 한 칸, 두 칸 뛰는 거야! 이 점 삼오 곱하기 백은, 이백삼십오! 점이 맨 끝까지 가면 점은 안 써도 돼. 그리고 또 하나! 영 점 칠에 백을 곱하면 어떻게 될까? 점이 두 칸 뛰어야 하는데 칠 뒤에 칸이 하나밖에 없지? 그럴 땐 빈칸에 영을 채우면 돼. 그래서 칠십! 버튼 눌러서 두 번 점프하는 거 보자!",
+    s4:"그런데 윤오야, 이십삼처럼 점이 없는 자연수는 어떻게 할까? 여기에 진짜 비밀이 있어. 자연수에도 사실 점이 숨어 있어! 이십삼은 이십삼 점, 이렇게 점이 맨 끝에 숨어 있는 거야. 점 뒤에 아무것도 없으니까 그냥 안 쓰는 거지. 자, 그럼 이십삼에 십을 곱하면? 숨어 있던 점이 오른쪽으로 한 칸 폴짝! 그런데 점이 뛰고 나니까 삼 뒤에 빈칸이 생겼지? 빈칸에는 영을 채워! 그래서 이백삼십! 백을 곱하면 두 칸 뛰니까 영을 두 개 채워서, 이천삼백! 그래서 자연수에 십을 곱하면 뒤에 영이 하나 붙고, 백을 곱하면 영이 두 개 붙는 거야. 소수랑 똑같은 규칙이지? 버튼 눌러서 숨은 점이 뛰는 걸 봐!",
+    s5:"이번엔 반대야! 십분의 일을 곱하는 거! 십분의 일은, 위에 일, 아래에 십이 있는 분수인데, 이건 십으로 나누는 거랑 똑같아. 케이크를 열 조각으로 똑같이 나눈 것 중에 한 조각! 그러니까 당연히 작아지지? 작아지려면 숫자들이 오른쪽 작은 칸으로 이사 가야 해. 그럼 점은 왼쪽으로 한 칸 뛴 것처럼 보여! 이십삼 점 오에 십분의 일을 곱하면, 이 점 삼오! 아까 십 배 했던 거를 거꾸로 되돌린 거야. 자연수도 똑같아. 이백삼십에 십분의 일을 곱하면, 숨은 점이 왼쪽으로 한 칸 와서, 이십삼! 버튼 눌러서 왼쪽으로 뛰는 거 확인해 봐!",
+    s6:"백분의 일은 백으로 나누는 거! 십으로 두 번 나누는 거니까, 점이 왼쪽으로 두 칸! 이백삼십오에 백분의 일을 곱하면, 이 점 삼오! 그런데 칠에 백분의 일을 곱하면 어떻게 될까? 칠 왼쪽에 칸이 없잖아. 이럴 땐 영을 채우는 거야! 점이 왼쪽으로 두 칸 가야 하니까, 영 점 영 칠! 자, 영을 채우는 것만 잘하면 백분의 일도 끝! 버튼 눌러봐!",
+    s7:"이제 윤오가 직접 해볼 차례야! 막대로 시작 숫자를 고르고, 십 배, 백 배, 십분의 일, 백분의 일 버튼을 눌러봐. 개구리 점이 어디로, 몇 칸 뛰는지 잘 봐. 커지면 오른쪽, 작아지면 왼쪽! 자연수도 골라서 해 봐. 마음껏 이것저것 눌러봐!",
+    s8:"자, 한눈에 정리해 보자! 딱 두 가지만 물어보면 돼. 첫째, 커지는 거야 작아지는 거야? 십이나 백을 곱하면 커지니까 점이 오른쪽! 십분의 일이나 백분의 일을 곱하면 작아지니까 점이 왼쪽! 둘째, 영이 몇 개야? 십은 영이 한 개니까 한 칸, 백은 영이 두 개니까 두 칸! 그리고 빈칸이 생기면 영으로 채우고, 숫자 순서는 절대 안 바뀌어! 버튼을 눌러서 푸는 순서를 한 단계씩 봐 봐.",
+    s9:"자, 이제 진짜 실력 테스트 시간이야! 여덟 문제를 낼 거야. 커지는지 작아지는지, 영이 몇 개인지만 생각하면 돼. 틀려도 하나도 안 창피해, 다시 하면 되니까! 윤오라면 다 맞힐 수 있어. 자신 있게, 파이팅!"
+  };
+
+  /* 문장 단위로 잘라 이어 말하기 + 크롬 끊김 방지 + 세대 가드 */
+  var keepAlive=null, activeBtn=null, gen=0;
+  function stopKeepAlive(){ if(keepAlive){ clearInterval(keepAlive); keepAlive=null; } }
+  function startKeepAlive(){ stopKeepAlive(); keepAlive=setInterval(function(){
+      if(window.speechSynthesis && speechSynthesis.speaking){ try{ speechSynthesis.resume(); }catch(e){} }
+      else stopKeepAlive();
+    },5000); }
+  function clearActive(){ if(activeBtn){ activeBtn.classList.remove('speaking'); activeBtn=null; } }
+  function speak(key, btn){
+    if(!window.speechSynthesis) return;
+    if(!soundOn){ return; }
+    var text = SCRIPT[key] ? SCRIPT[key] : key;
+    if(!text) return;
+    speechSynthesis.cancel(); clearActive(); stopKeepAlive();
+    var myGen=++gen;
+    var chunks=(text.match(/[^.!?。！？…~]+[.!?。！？…~]*/g)||[text])
+      .map(function(s){return s.trim();}).filter(Boolean);
+    var i=0;
+    if(btn){ activeBtn=btn; btn.classList.add('speaking'); }
+    function next(){
+      if(myGen!==gen) return;
+      if(i>=chunks.length){ clearActive(); stopKeepAlive(); return; }
+      var u=new SpeechSynthesisUtterance(chunks[i++]);
+      u.lang="ko-KR"; if(voice) u.voice=voice;
+      u.rate=0.9; u.pitch=1.6; u.volume=1;   // 높은 음 = 귀여운 톤 / 속도는 천천히 (사용자 요청 10-07)
+      u.onend=function(){ if(myGen!==gen) return; setTimeout(next,140); };
+      u.onerror=function(){ if(myGen!==gen) return; clearActive(); stopKeepAlive(); };
+      speechSynthesis.speak(u);
+    }
+    startKeepAlive();
+    setTimeout(next,120);
+  }
+  function stopSpeak(){ gen++; if(window.speechSynthesis) speechSynthesis.cancel(); clearActive(); stopKeepAlive(); }
+
+  /* ===== 숫자 도우미 ===== */
+  function fmt(v){ // 숫자 → 문자열 (부동소수 오차·불필요한 0 제거)
+    var s=(Math.round(v*1e6)/1e6).toString();
+    if(s.indexOf('e')>=0) s=v.toFixed(6);
+    if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+    return s;
+  }
+  function korNum(s){ // "23.5" → "이십삼 점 오" (읽기용)
+    var D={'0':'영','1':'일','2':'이','3':'삼','4':'사','5':'오','6':'육','7':'칠','8':'팔','9':'구'};
+    var parts=s.split('.'), ip=parts[0], fp=parts[1]||'';
+    var U=['','십','백','천'];
+    var out='';
+    if(ip==='0') out='영';
+    else { for(var i=0;i<ip.length;i++){ var d=ip[i], pos=ip.length-1-i;
+      if(d==='0') continue;
+      out+=((d==='1'&&pos>0)?'':D[d])+U[pos]; } }
+    if(fp){ out+=' 점 '; for(var j=0;j<fp.length;j++) out+=D[fp[j]]+' '; }
+    return out.trim();
+  }
+  function fracHTML(n,d){ return '<span class="frac"><span class="num">'+n+'</span><span class="bar"></span><span class="den">'+d+'</span></span>'; }
+  function opLabel(k){
+    if(k===10) return '×10'; if(k===100) return '×100';
+    if(k===0.1) return '×'+fracHTML(1,10); if(k===0.01) return '×'+fracHTML(1,100);
+    return '';
+  }
+  function opKor(k){ if(k===10) return '십 배'; if(k===100) return '백 배'; if(k===0.1) return '십분의 일'; if(k===0.01) return '백분의 일'; return ''; }
+
+  /* ===== 자리표 ===== cols: 천 백 십 일 | . | 1/10 1/100 1/1000 */
+  var HEAD=['천','백','십','일',null,fracHTML(1,10),fracHTML(1,100),fracHTML(1,1000)];
+  function cellsOf(v){
+    var parts=fmt(v).split('.'), ip=parts[0], fp=parts[1]||'';
+    var cells=['','','',''], fcells=['','',''];
+    for(var i=0;i<4;i++){ var idx=ip.length-1-i; cells[3-i]= idx>=0? ip[idx] : ''; }
+    for(var j=0;j<3;j++) fcells[j]= j<fp.length? fp[j] : '';
+    return cells.concat([null],fcells);
+  }
+  function placeHTML(v, lit){
+    var all=cellsOf(v), isInt=fmt(v).indexOf('.')<0;
+    var h='';
+    HEAD.forEach(function(x){ h+= x===null? '<div class="pt h">·</div>' : '<div class="h">'+x+'</div>'; });
+    all.forEach(function(d,i){
+      if(d===null){ h+='<div class="pt'+(isInt?' ghost':'')+'">.</div>'; return; }
+      var cls='c'+(d===''?' empty':'');
+      if(lit && lit.indexOf(i)>=0) cls+=(d==='0'?' zero':' lit');
+      h+='<div class="'+cls+'">'+(d===''?'·':d)+'</div>';
+    });
+    return h;
+  }
+  function litIdx(before, after){ // 바뀐 칸(새로 생긴 0 포함)
+    var a=cellsOf(before), b=cellsOf(after), out=[];
+    for(var i=0;i<8;i++){ if(i===4) continue; if(a[i]!==b[i] && b[i]!=='') out.push(i); }
+    return out;
+  }
+  function numshowHTML(v, newZeros){ // 자연수면 끝에 연한 '숨은 점' 표시
+    var s=fmt(v), h='', hasDot=s.indexOf('.')>=0;
+    for(var i=0;i<s.length;i++){
+      if(s[i]==='.') h+='<span class="p">.</span>';
+      else h+='<span class="d'+((newZeros&&newZeros.indexOf(i)>=0)?' zero':'')+'">'+s[i]+'</span>';
+    }
+    if(!hasDot) h+='<span class="p ghost">.</span>';
+    return h;
+  }
+
+  /* ===== 점프 데모(스테이지 2~6) ===== */
+  var DEMO={
+    2:{from:2.35, k:10,
+       say:"폴짝! 점이 오른쪽으로 한 칸 뛰었지? 이 점 삼오가 이십삼 점 오가 됐어! 숫자 이, 삼, 오는 그대로! 십 배가 됐으니까 커진 거야!",
+       hint:'점이 <b>오른쪽으로 1칸</b> ➡️ &nbsp; 2.35 × 10 = <b>23.5</b>', done:'✅ 23.5! 오른쪽 1칸'},
+    3:{from:2.35, k:100,
+       say:"폴짝, 폴짝! 두 번 뛰었어! 이 점 삼오가 이백삼십오! 점이 맨 끝에 가니까 이제 점은 안 써도 돼. 백 배니까 두 칸! 참 쉽지?",
+       hint:'점이 <b>오른쪽으로 2칸</b> ➡️➡️ &nbsp; 2.35 × 100 = <b>235</b>', done:'✅ 235! 오른쪽 2칸'},
+    4:{from:23, k:10,
+       say:"숨어 있던 점이 오른쪽으로 폴짝! 삼 뒤에 빈칸이 생겼지? 거기에 영을 채워서, 이백삼십! 자연수에 십을 곱하면 영이 하나 붙는 거야! 이번엔 백 배도 해 볼까? 버튼을 다시 눌러봐!",
+       hint:'숨은 점이 <b>오른쪽 1칸</b> ➡️ 빈칸에 <b>0</b> &nbsp; 23 × 10 = <b>230</b>', done:'✅ 230!',
+       extra:{from:23, k:100, say:"이번엔 백 배! 숨은 점이 두 칸 뛰니까, 빈칸이 두 개! 영을 두 개 채워서, 이천삼백! 자연수에 백을 곱하면 영이 두 개 붙어! 완벽해!",
+              hint:'숨은 점이 <b>오른쪽 2칸</b> ➡️➡️ 빈칸에 <b>0 두 개</b> &nbsp; 23 × 100 = <b>2300</b>', done:'✅ 2300! 0 두 개 붙이기',
+              btn:'🐸🐸 이번엔 23 × 100 점프!'}},
+    5:{from:23.5, k:0.1,
+       say:"이번엔 왼쪽으로 폴짝! 이십삼 점 오가 이 점 삼오가 됐어! 십으로 나눴으니까 작아진 거야. 아까 십 배 한 걸 거꾸로 돌린 거지! 자연수도 해 볼까? 버튼을 다시 눌러봐!",
+       hint:'점이 <b>왼쪽으로 1칸</b> ⬅️ &nbsp; 23.5 ÷ 10 = <b>2.35</b>', done:'✅ 2.35!',
+       extra:{from:230, k:0.1, say:"이백삼십에 십분의 일! 숨어 있던 점이 왼쪽으로 한 칸! 그럼 이십삼 점 영이 되는데, 점 뒤에 영은 안 써도 되니까, 그냥 이십삼! 영이 하나 사라진 것처럼 보이지? 완벽해!",
+              hint:'숨은 점이 <b>왼쪽 1칸</b> ⬅️ &nbsp; 230 ÷ 10 = <b>23</b> (23.0 = 23)', done:'✅ 23! 왼쪽 1칸',
+              btn:'🐸 이번엔 230 × '+fracHTML(1,10)+' 해보기!'}},
+    6:{from:235, k:0.01,
+       say:"왼쪽으로 폴짝, 폴짝! 이백삼십오가 이 점 삼오! 백으로 나눴으니까 두 칸 작아졌어! 이제 영 채우기도 한번 볼까? 버튼을 다시 눌러봐!",
+       hint:'점이 <b>왼쪽으로 2칸</b> ⬅️⬅️ &nbsp; 235 ÷ 100 = <b>2.35</b>', done:'✅ 2.35!',
+       extra:{from:7, k:0.01, say:"칠에 백분의 일! 칠 왼쪽엔 칸이 없지? 그래서 영을 채워! 영 점 영 칠! 점이 왼쪽으로 두 칸 간 거야!",
+              hint:'빈칸에 <b>0을 채워</b> ⬅️⬅️ &nbsp; 7 ÷ 100 = <b>0.07</b>', done:'✅ 0.07! 0 채우기 성공',
+              btn:'🐸🐸 이번엔 7 × '+fracHTML(1,100)+' 해보기!'}}
+  };
+  var demoState={};
+  function el(id){ return document.getElementById(id); }
+  function resetDemo(n){
+    var d=DEMO[n]; demoState[n]=0;
+    el('place'+n).innerHTML=placeHTML(d.from);
+    el('num'+n).innerHTML=numshowHTML(d.from);
+    el('hint'+n).innerHTML= n===4? '연한 점이 보이지? 숨어 있는 점이야 👇' : '버튼을 눌러봐 👇';
+    var b=el('btn'+n); b.disabled=false; b.innerHTML=b.dataset.orig;
+  }
+  function runDemo(n){
+    var d=DEMO[n], st=demoState[n]||0, b=el('btn'+n);
+    if(st>=2 || (st===1 && !d.extra)) return;
+    var src=(st===1)? d.extra : d;
+    var from=src.from, k=src.k, to=from*k;
+    el('num'+n).innerHTML=numshowHTML(from);
+    var shift=(k>=10? 1:-1)*((k===100||k===0.01)?2:1);
+    var p=document.querySelector('#num'+n+' .p');
+    if(p){ p.classList.remove('ghost'); p.style.color='var(--tangerine)'; p.style.transform='translateX('+(shift*0.72)+'em) translateY(-16px)'; }
+    b.disabled=true;
+    setTimeout(function(){
+      var before=fmt(from), after=fmt(to), newZ=[];
+      // 새로 생긴 0 위치(큰 숫자 표시용) — 앞/뒤에 채워진 0
+      for(var i=0;i<after.length;i++){ if(after[i]==='0' && before.replace('.','').indexOf('0')<0) newZ.push(i); }
+      el('num'+n).innerHTML=numshowHTML(to, newZ);
+      el('place'+n).innerHTML=placeHTML(to, litIdx(from,to));
+      el('hint'+n).innerHTML=src.hint;
+      speak(src.say); burst();
+      demoState[n]=st+1;
+      if(d.extra && st===0){ b.innerHTML=d.extra.btn; b.disabled=false; }
+      else { b.innerHTML=src.done; b.disabled=true; }
+    },560);
+  }
+  [2,3,4,5,6].forEach(function(n){ var b=el('btn'+n); b.dataset.orig=b.innerHTML;
+    b.addEventListener('click',function(){ runDemo(n); }); });
+
+  /* ===== 스테이지 7 직접 해보기 ===== */
+  var BASES=[0.5, 1.8, 4.56, 7, 12.3, 23, 36.07, 250, 0.09, 8];
+  var baseS=el('baseSlider'), curK=1;
+  function update7(spoke){
+    var base=BASES[+baseS.value], to=base*curK;
+    el('baseLbl').textContent=fmt(base);
+    el('place7').innerHTML=placeHTML(to, curK===1?null:litIdx(base,to));
+    el('num7').innerHTML=numshowHTML(to);
+    var shift=(curK===100||curK===0.01)?2:(curK===1?0:1);
+    var dir=curK>1?'오른쪽':(curK<1?'왼쪽':'');
+    el('hint7').innerHTML= curK===1? '지금 숫자: <b>'+fmt(base)+'</b>'+(fmt(base).indexOf('.')<0?' (자연수 = 점이 끝에 숨어 있어)':'')+' — 버튼을 눌러봐!'
+      : '점이 <b>'+dir+'으로 '+shift+'칸</b> '+(curK>1?'➡️':'⬅️').repeat(shift);
+    el('read7').innerHTML= curK===1? ''
+      : '<span class="hi">'+fmt(base)+'</span> '+opLabel(curK)+' = <span class="hi">'+fmt(to)+'</span>';
+    if(spoke && curK!==1){
+      speak(korNum(fmt(base))+'에 '+opKor(curK)+'! 점이 '+dir+'으로 '+(shift===2?'두':'한')+' 칸! 그래서 '+korNum(fmt(to))+'!');
+    }
+  }
+  baseS.addEventListener('input',function(){ curK=1; setPill(1); update7(false); });
+  function setPill(k){ document.querySelectorAll('.pill').forEach(function(p){ p.classList.toggle('on', +p.dataset.k===k); }); }
+  document.querySelectorAll('.pill').forEach(function(p){
+    p.addEventListener('click',function(){ curK=+p.dataset.k; setPill(curK); update7(true); });
+  });
+
+  /* ===== 스테이지 8 단계 ===== */
+  var STEP8=["먼저 물어봐! 커지는 거야, 작아지는 거야? 십이나 백을 곱하면 커지니까 오른쪽! 십분의 일이나 백분의 일이면 작아지니까 왼쪽!",
+             "그다음 세어봐! 영이 몇 개야? 십은 한 개니까 한 칸, 백은 두 개니까 두 칸!",
+             "점을 그만큼 옮겨! 빈칸이 생기면 영으로 채우고! 자연수는 점이 맨 끝에 숨어 있다는 거 잊지 마!",
+             "끝! 숫자 순서는 절대 안 바뀌어. 점만 움직인 거야! 참 잘했어!"];
+  var progress={};
+  function resetSteps(stepsId,btnId){
+    progress[stepsId]=0;
+    document.querySelectorAll('#'+stepsId+' .step').forEach(function(s){s.classList.remove('on');});
+    var b=el(btnId); b.disabled=false; b.textContent='👉 푸는 순서 한 단계씩';
+  }
+  function bindStepper(stepsId,btnId,arr){
+    el(btnId).addEventListener('click',function(){
+      var steps=document.querySelectorAll('#'+stepsId+' .step');
+      var i=progress[stepsId]||0;
+      if(i>=steps.length) return;
+      steps[i].classList.add('on');
+      steps[i].scrollIntoView({block:'nearest',behavior:'smooth'});
+      speak(arr[i]);
+      progress[stepsId]=i+1;
+      if(progress[stepsId]>=steps.length){ this.textContent='✅ 다 봤어!'; this.disabled=true; burst(); }
+      else { this.textContent='다음 단계 ('+(i+2)+'/'+steps.length+') ▶'; }
+    });
+  }
+  bindStepper('steps8','btn8',STEP8);
+
+  /* ===== 퀴즈 ===== */
+  var QUIZ=[
+    {q:'<b>3.14 × 10</b> 은?', opts:['31.4','0.314','314','3.140'], a:0,
+     say:'첫 번째 문제! 삼 점 일사 곱하기 십은? 십 배면 오른쪽으로 한 칸!'},
+    {q:'<b>23 × 10</b> 은?', opts:['2.3','230','23','2300'], a:1,
+     say:'두 번째 문제! 이십삼 곱하기 십은? 자연수는 점이 끝에 숨어 있어! 오른쪽으로 한 칸, 빈칸엔 영!'},
+    {q:'<b>0.6 × 100</b> 은?', opts:['6','600','60','0.006'], a:2,
+     say:'세 번째 문제! 영 점 육 곱하기 백은? 두 칸 뛰어야 하는데 칸이 모자라면 영을 채워!'},
+    {q:'<b>45.2 × </b>'+fracHTML(1,10)+' 은?', opts:['452','4.52','0.452','45.02'], a:1,
+     say:'네 번째 문제! 사십오 점 이에 십분의 일은? 십으로 나누는 거니까 왼쪽으로 한 칸!'},
+    {q:'<b>40 × 100</b> 은?', opts:['400','0.4','4000','40000'], a:2,
+     say:'다섯 번째 문제! 사십 곱하기 백은? 숨은 점이 오른쪽으로 두 칸! 영이 몇 개가 될까?'},
+    {q:'<b>8 × </b>'+fracHTML(1,100)+' 은?', opts:['0.8','800','0.008','0.08'], a:3,
+     say:'여섯 번째 문제! 팔에 백분의 일은? 왼쪽으로 두 칸인데 칸이 없지? 영을 채워봐!'},
+    {q:'<b>560 × </b>'+fracHTML(1,10)+' 은?', opts:['5600','5.6','56','0.56'], a:2,
+     say:'일곱 번째 문제! 오백육십에 십분의 일은? 숨은 점이 왼쪽으로 한 칸!'},
+    {q:'<b>12.5 × </b>'+fracHTML(1,100)+' 은?', opts:['1.25','0.125','1250','0.0125'], a:1,
+     say:'마지막 문제! 십이 점 오에 백분의 일은? 왼쪽으로 두 칸! 영 채우기 잊지 마!'}
+  ];
+  var qi=0,score=0;
+  function startQuiz(){ qi=0; score=0; showQ(); }
+  function showQ(){
+    var it=QUIZ[qi];
+    el('qprog').textContent='문제 '+(qi+1)+' / '+QUIZ.length;
+    el('quizQ').innerHTML=it.q;
+    el('qfeed').textContent='';
+    var box=el('choices'); box.innerHTML='';
+    it.opts.forEach(function(opt,idx){
+      var b=document.createElement('button'); b.className='choice';
+      b.textContent=opt;
+      b.addEventListener('click',function(){ answer(idx,b,it); });
+      box.appendChild(b);
+    });
+    nextBtn.disabled=true;
+  }
+  function answer(idx,btn,it){
+    if(btn.dataset.locked) return;
+    if(idx===it.a){
+      btn.classList.add('correct');
+      document.querySelectorAll('#choices .choice').forEach(function(c){c.dataset.locked="1";});
+      var f=el('qfeed'); f.style.color=css('--mint'); f.textContent='🎉 정답이야! 최고!';
+      score++; burst(); speak("딩동댕! 정답이야! 정말 잘했어!");
+      setTimeout(function(){ qi++;
+        if(qi<QUIZ.length) showQ();
+        else { nextBtn.disabled=false; el('qfeed').textContent='🏆 다 풀었어! 다음 버튼을 눌러봐!'; speak("우와, 다 풀었어! 윤오 정말 대단한걸? 다음 버튼을 눌러봐!"); }
+      },1500);
+    } else {
+      btn.classList.add('wrong');
+      var f=el('qfeed'); f.style.color=css('--berry');
+      f.textContent='아깝다! 커지면 오른쪽, 작아지면 왼쪽! 0이 몇 개? 다시 골라봐 💪';
+      speak("음, 아쉬워! 커지는 거면 오른쪽, 작아지는 거면 왼쪽! 영이 몇 개인지 세어 봐. 다시 한 번 골라봐!");
+    }
+  }
+
+  /* ===== 색종이 ===== */
+  var cvs=el('confetti'),ctx=cvs.getContext('2d'),parts=[],raf=null;
+  function resize(){cvs.width=innerWidth;cvs.height=innerHeight;} resize(); addEventListener('resize',resize);
+  var COLORS=['#FF4E86','#FF9F1C','#8A63D2','#17C3A2','#38B6FF','#FFD166'];
+  function burst(){
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    for(var i=0;i<110;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*0.42,
+      vx:(Math.random()-.5)*12,vy:Math.random()*-13-4,s:Math.random()*9+5,
+      c:COLORS[i%COLORS.length],r:Math.random()*6,vr:(Math.random()-.5)*.4});
+    if(!raf) loop();
+  }
+  function loop(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    for(var i=parts.length-1;i>=0;i--){var p=parts[i];
+      p.vy+=0.4;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;
+      ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6);ctx.restore();
+      if(p.y>cvs.height+40) parts.splice(i,1);}
+    if(parts.length) raf=requestAnimationFrame(loop); else {raf=null;ctx.clearRect(0,0,cvs.width,cvs.height);}
+  }
+
+  /* ===== 렌더 ===== */
+  function renderStage(n){
+    if(n===1){ el('place1').innerHTML=placeHTML(3.3, [3,5]); }
+    if(n>=2 && n<=6) resetDemo(n);
+    if(n===7){ curK=1; setPill(1); update7(false); }
+    if(n===8) resetSteps('steps8','btn8');
+    if(n===9) startQuiz();
+  }
+
+  /* ===== 네비 ===== */
+  var stages=document.querySelectorAll('.stage');
+  var dotsBox=el('dots');
+  for(var d=1;d<=CONTENT_MAX;d++){var dd=document.createElement('div');dd.className='dot';dd.dataset.i=d;dotsBox.appendChild(dd);}
+  var dotEls=dotsBox.querySelectorAll('.dot');
+  var nav=el('nav'),nextBtn=el('nextBtn'),prevBtn=el('prevBtn');
+
+  function go(n){
+    stopSpeak(); n=Math.max(0,Math.min(LAST,n)); cur=n;
+    stages.forEach(function(s){s.classList.toggle('show',+s.dataset.stage===n);});
+    dotEls.forEach(function(dt){var i=+dt.dataset.i;
+      dt.classList.toggle('on',i===n); dt.classList.toggle('done',i<n && n<=CONTENT_MAX);});
+    nav.style.display=(n>=1&&n<=CONTENT_MAX)?'flex':'none';
+    prevBtn.style.visibility=(n===1)?'hidden':'visible';
+    nextBtn.textContent=(n===CONTENT_MAX)?'끝내기 🏁':'다음 ▶';
+    nextBtn.disabled=false;
+    if(n===LAST){ nav.style.display='none';
+      el('scoreLine').textContent=QUIZ.length+'문제 중 '+score+'개 정답! 참 잘했어요 🌟'; burst(); }
+    window.scrollTo({top:0,behavior:'smooth'});
+    renderStage(n);
+    if(soundOn && n>=1 && n<=CONTENT_MAX){ var key='s'+n; setTimeout(function(){ speak(key); },420); }
+  }
+  nextBtn.addEventListener('click',function(){ go(cur+1); });
+  prevBtn.addEventListener('click',function(){ go(cur-1); });
+
+  document.querySelectorAll('.play').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      soundOn=true; updateSoundIcon();
+      var key=btn.dataset.say;
+      if(key==='greet'){ speak('greet',btn); go(1); } else speak(key,btn);
+    });
+  });
+  el('btnAgain').addEventListener('click',function(){ go(0); });
+
+  var soundToggle=el('soundToggle');
+  function updateSoundIcon(){ soundToggle.textContent=soundOn?'🔊':'🔇'; }
+  soundToggle.addEventListener('click',function(){ soundOn=!soundOn; updateSoundIcon(); if(!soundOn) stopSpeak(); });
+  addEventListener('pagehide',stopSpeak);
+})();
+</script>
+</body>
+</html>
